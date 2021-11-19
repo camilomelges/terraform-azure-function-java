@@ -42,14 +42,22 @@
 #       with:
 #         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-name: 'Terraform'
+name: 'CD'
 
 on:
-  push:
-    branches:
-    - main
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Test scenario tags'
+  #push:
+  #  branches:
+  #  - main
+  #pull_request:
+  #  branches: [ main ]
 
 jobs:
   terraform:
