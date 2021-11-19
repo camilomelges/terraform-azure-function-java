@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  # Triggers the workflow on pull request event but only for the main branch
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      
+      - name: Running tests
+        run: mvn test
+
+      - name: Deploying application to github packages
+        run: mvn --batch-mode deploy -DskipTests=true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
