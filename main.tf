@@ -12,13 +12,20 @@ provider "azurerm" {
   features {}
 }
 
+variable "resource_group_name" {}
+variable "storage_account_name" {}
+variable "app_service_plan_name" {}
+variable "application_insights_name" {}
+variable "function_app_name" {}
+variable "resource_group_location" {}
+
 resource "azurerm_resource_group" "function_java" {
-  name     = "functionsjavagroup"
-  location = "Brazil South"
+  name     = var.resource_group_name
+  location = var.resource_group_location
 }
 
 resource "azurerm_storage_account" "function_java" {
-  name                     = "functionsjavaaccount"
+  name                     = var.storage_account_name
   resource_group_name      = azurerm_resource_group.function_java.name
   location                 = azurerm_resource_group.function_java.location
   account_tier             = "Standard" # https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview
@@ -26,7 +33,7 @@ resource "azurerm_storage_account" "function_java" {
 }
 
 resource "azurerm_app_service_plan" "function_java" {
-  name                = "functionsjavaplan"
+  name                = var.app_service_plan_name
   location            = azurerm_resource_group.function_java.location
   resource_group_name = azurerm_resource_group.function_java.name
 
@@ -37,14 +44,14 @@ resource "azurerm_app_service_plan" "function_java" {
 }
 
 resource "azurerm_application_insights" "function_java" {
-  name                = "terraformazurefunctionjava"
+  name                = var.application_insights_name
   location            = azurerm_resource_group.function_java.location
   resource_group_name = azurerm_resource_group.function_java.name
   application_type    = "java"
 }
 
 resource "azurerm_function_app" "function_java" {
-  name                       = "terraformazurefunctionjava"
+  name                       = var.function_app_name
   location                   = azurerm_resource_group.function_java.location
   resource_group_name        = azurerm_resource_group.function_java.name
   app_service_plan_id        = azurerm_app_service_plan.function_java.id
