@@ -1,6 +1,7 @@
 name: CI/CD
 
 on:
+  # Trigger
   # Triggers the workflow on pull request event but only for the main branch
   push:
     branches: [main]
@@ -8,49 +9,55 @@ on:
     branches: [main]
 
 jobs:
-  tests:
-    runs-on: ubuntu-latest
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
-        with:
-          java-version: 11
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+  #tests:
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+  #    - uses: actions/checkout@v2
+  #    - uses: actions/setup-java@v1
+  #      with:
+  #        java-version: 11
+  #    - uses: actions/cache@v2
+  #      with:
+  #        path: ~/.m2/repository
+  #        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+  #        restore-keys: |
+  #          ${{ runner.os }}-maven-
 
-      - name: Unit Tests
-        run: mvn test
+  #    - name: Unit Tests
+  #      run: mvn test
 
-  deploy-package-on-repository:
-    needs: tests
-    runs-on: ubuntu-latest
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
-        with:
-          java-version: 11
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+  #deploy-package-on-repository:
+  #  needs: tests
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+  #    - uses: actions/checkout@v2
+  #    - uses: actions/setup-java@v1
+  #      with:
+  #        java-version: 11
+  #    - uses: actions/cache@v2
+  #      with:
+  #        path: ~/.m2/repository
+  #        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+  #        restore-keys: |
+  #          ${{ runner.os }}-maven-
 
-      - name: Deploying application to github packages
-        run: mvn --batch-mode deploy -DskipTests=true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #    - name: Deploying application to github packages
+  #      run: mvn --batch-mode deploy -DskipTests=true
+  #      env:
+  #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   provide-terraform-infra:
-    needs: tests
+    #needs: tests
     runs-on: ubuntu-latest
     steps:
+      # Azure login
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
@@ -69,11 +76,22 @@ jobs:
         run: terraform fmt -check
 
       # Generates an execution plan for Terraform
-      - name: Terraform Plan
-        run: terraform plan
+      #- name: Terraform Plan
+      #  run: terraform plan
+      #  env: 
+      #    ARM_USE_MSI: true
+      #    ARM_SUBSCRIPTION_ID: 5d60ccdc-8ec5-41f0-bb80-629751da1497
+      #    ARM_TENANT_ID: 68ca82b9-13a5-4f78-b1d7-08c4ed0e54af
+      #    ARM_CLIENT_ID: 859ae3a6-6bfd-4759-9930-0f411a65e162
+      #    ARM_MSI_ENDPOINT: https://management.core.windows.net/
 
       # On push to main, build or change infrastructure according to Terraform configuration files
       # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        #if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve
+        env: 
+          ARM_CLIENT_ID: 859ae3a6-6bfd-4759-9930-0f411a65e162
+          ARM_CLIENT_SECRET: CopIUKzxoNmuuEdR-YS2Ev1kn3.sZ-i6R2
+          ARM_SUBSCRIPTION_ID: 5d60ccdc-8ec5-41f0-bb80-629751da1497
+          ARM_TENANT_ID: 68ca82b9-13a5-4f78-b1d7-08c4ed0e54af
